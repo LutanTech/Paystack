@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Make Payment - Lutan Tech</title>
+  
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  
+  <script  src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    .theme-body {
+      background-color: #000000;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      background-image: url("https://www.prisma.io/illustrations/postgres-header-circle.svg?fill=%23fff&stroke=%23fff");
+      background-attachment: fixed;
+      background-position: center;
+
+    }
+    input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+
+    .theme-card {
+        background-color: #00000088;
+        border: 1px solid #1f2937;
+    }
+
+    .theme-input {
+        background-color: #00000000;
+        color: #f3f4f6;
+        border-color: #374151;
+    }
+    .theme-input::placeholder {
+        color: #9ca3af;
+    }
+    .theme-input:focus {
+        border:2px solid #00ffa2;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5);
+    }
+
+    .theme-text-faint {
+        color: #9ca3af;
+    }
+    .theme-separator {
+        border-color: #374151;
+    }
+    .logo{
+      display: flex;
+      width: 80px;
+      border-radius: 10px;
+      justify-content: center;
+      align-items: center;
+      margin:10px auto;
+      background-color: #00ffbbcd;
+    }
+    .loader {
+      display: none;
+      position: fixed;
+      top: 0%;
+      left: 0%;
+      width: 100%;
+      height: 100%;
+      background-color: #00000088;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #00ffa2;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    *:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: grey !important;
+    }
+  </style>
+</head>
+<body class="theme-body min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased transition-colors duration-300">
+  <div class="loader">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="card theme-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-sm md:max-w-md transition-all duration-300">
+    
+    <img class="logo" src="/assets/images/LUTAN_LOGO_PNG_N.png" alt="">
+
+
+    <h2 class="text-xl font-extrabold text-white mb-1 text-center transition-colors duration-300">Powered by Lutan Tech</h2>
+    <p class="text-xs theme-text-faint mb-6 text-center border-b theme-separator pb-4 transition-colors duration-300">Currency: KES &middot; Mobile money </p>
+
+    <form id="payForm" class="space-y-4">
+      <div class="relative">
+        <label for="email" class="sr-only">Email</label>
+        <input id="email" type="email" placeholder="Your email" required 
+               class="theme-input w-full px-4 py-3 border rounded-xl focus:ring-2 transition duration-150" />
+      </div>
+
+      <div class="relative">
+        <label for="amount" class="sr-only">Amount</label>
+        <input id="amount" type="number" placeholder="Amount in Ksh" min="1" step="1" required 
+               class="theme-input w-full px-4 py-3 border rounded-xl focus:ring-2 transition duration-150" />
+      </div>
+      
+      <button type="button" id="payButton"
+              class="w-full text-white py-3 rounded-xl font-semibold text-lg
+                     bg-emerald-500 hover:bg-emerald-600 transition duration-300 shadow-lg shadow-emerald-900/50 
+                     transform hover:scale-[1.01] active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-gray-900">
+        Pay Now
+      </button>
+    </form>
+
+    <p id="status" 
+       class="text-sm text-center theme-text-faint mt-6 pt-4 border-t theme-separator transition-colors duration-300">
+      Fill in the details and click 'Pay Now' to start.
+    </p>
+
+    <p class="text-sm text-center theme-text-faint mt-6 pt-4 border-t theme-separator transition-colors duration-300">Having Questions?<a style="color: #0f0; text-decoration: underline;" href="/learn_more"> Learn More </a></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById("payForm");
+      var publicKey = ""; 
+      const statuselem = document.getElementById("status");
+      const payButton = document.getElementById("payButton"); 
+      const loader = document.querySelector('.loader');
+      const baseUrl = 'http://127.0.0.1:5000'
+
+    function fetchpublicKey(){
+      statusEl("Fetching Paystack Public Key...", 'info');
+      payButton.disabled = true;
+      fetch(`${baseUrl}`)
+      .then(res=>res.json())
+      .then(data=>{
+        publicKey = data.public_key
+        if(publicKey){
+          statusEl("Paystack Public Key has been configured. Please proceed to make payment.", 'success');
+        } else {
+          statusEl("Error: Paystack Public Key has not been configured. Please wait for server response.", 'error');
+        }
+        payButton.disabled = false;
+      })
+      .catch(err => {
+        statusEl("Error: Network error. Please try again later.", 'error');
+        payButton.disabled = false;
+      })
+      .finally(() => {
+        payButton.disabled = false;
+      })
+
+
+    }
+      fetchpublicKey()
+
+    function statusEl(message, type){
+
+      loader.style.display = 'none';
+      statuselem.textContent = message;
+      statuselem.classList.remove('theme-text-faint')
+      statuselem.classList.add(type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-blue-500');
+      loader.style.display = 'flex';
+      setTimeout(() => {
+        loader.style.display = 'none';
+      }, 3000);
+    }
+    async function fetchWithRetry(url, options = {}, retries = 3) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response;
+        } catch (error) {
+          if (i === retries - 1) throw error; 
+          const delay = Math.pow(2, i) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    payButton.addEventListener("click", async (e) => {
+      console.log('clicked')
+      payButton.disabled = true;
+      statusEl("Initializing payment...", 'info');
+      const email = document.getElementById("email").value.trim();
+      const amount = document.getElementById("amount").value.trim();
+
+      if(!email || !amount) { 
+        statusEl("Email and amount required!", 'error'); 
+        payButton.disabled = false;
+        return; 
+      }
+
+      if (publicKey === "") {
+        statusEl("Error: Paystack Public Key has not been configured. Please wait for server response.", 'error');
+        payButton.disabled = false;
+        fetchpublicKey();
+        return;
+      }
+
+      try {
+        const res = await fetchWithRetry(`${baseUrl}/pay/initiate`, {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ email, amount })
+        });
+        const data = await res.json();
+
+        if(!data.status || !data.data) {
+          statusEl(data.message || "Failed to initialize payment", 'error');
+          payButton.disabled = false;
+          return;
+        }
+
+        const ref = data.data.reference;
+
+        const handler = PaystackPop.setup({
+          key: publicKey,
+          email: email,
+          amount: parseFloat(amount) * 100, 
+          ref: ref,
+          currency: "KES",
+          channels: ["mobile_money", "card"], 
+          callback: function(response){
+            statusEl("Payment complete! Verifying reference...", 'info');
+            payButton.disabled = true;
+            fetchWithRetry(`${baseUrl}/pay/verify/${response.reference}`)
+              .then(r => r.json())
+              .then(j => {
+                if(j.status && j.data && j.data.status === "success"){
+                  statusEl("Payment confirmed ✅ Reference: " + response.reference, 'success');
+                  payButton.disabled = false;
+                } else {
+                  statusEl("Payment verification failed: " + (j.message || "Details unavailable."), 'error');
+                  payButton.disabled = false;
+                }
+              })
+              .catch(err => { 
+                console.error("Verification error:", err);
+                statusEl("Verification network error. Check console for details. Reference: " + response.reference, 'error'); 
+                payButton.disabled = false;
+              });
+          },
+          onClose: function(){
+            statusEl("Payment popup closed - payment not completed ❌", 'error');
+            payButton.disabled = false;
+          }
+        });
+        handler.openIframe();
+
+      } catch(err) {
+        console.error("Initialization error:", err);
+        statusEl("Network error initializing payment.", 'error');
+        payButton.disabled = false;
+      }
+      });
+    });
+  </script>
+</body>
+</html>

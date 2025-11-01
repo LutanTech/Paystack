@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About Paystack Payments | Lutan Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #000000;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      background-image: url("https://www.prisma.io/illustrations/postgres-header-circle.svg?fill=%23fff&stroke=%23fff");
+
+      background-attachment: fixed;
+      background-position: center;
+    }
+    .card {
+      background-color: #00000054;
+      border: 1px solid #1f2937;
+    }
+    .text-faint {
+      color: #9ca3af;
+    }
+    .accent {
+      color: #34d399;
+    }
+    a.link {
+      color: #34d399;
+      text-decoration: none;
+    }
+    a.link:hover {
+      text-decoration: underline;
+    }
+    img{
+        background-color: white;
+        border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-6">
+
+  <div class="max-w-3xl card p-8 rounded-2xl shadow-2xl mt-10">
+    <div class="flex justify-center mb-6">
+      <img src="https://i.ibb.co/KpHnKVW0/LUTAN-LOGO.png" alt="Lutan Tech Logo" class="h-14">
+    </div>
+
+    <h1 class="text-3xl font-bold mb-4 text-center">Understanding Paystack Payments</h1>
+    <p class="text-faint mb-8 text-center">Learn how our secure mobile money and card payments work.</p>
+
+    <section class="space-y-6 text-base leading-relaxed">
+      <div>
+        <h2 class="text-xl font-semibold mb-2 accent">What is Paystack?</h2>
+        <p>
+          Paystack is a trusted African payment gateway that allows you to pay securely using <strong>mobile money, debit cards, or bank transfers</strong>. 
+          It’s used by major companies and startups across Africa to collect payments quickly and safely.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-2 accent">Is it safe?</h2>
+        <p>
+          Absolutely ✅ Paystack uses <strong>bank-level encryption</strong> to protect your details. 
+          Your payment information is never shared with Lutan Tech or stored on our servers. 
+          Every transaction is processed through Paystack’s verified and PCI-DSS compliant platform.
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-2 accent">How the payment works</h2>
+        <ol class="list-decimal ml-6 space-y-2">
+          <li>Enter your email and the amount you want to pay on our payment page.</li>
+          <li>Click <strong>Pay Now</strong> — this opens a secure Paystack checkout window.</li>
+          <li>Select your preferred payment method: <em>Mobile Money, Card, or Bank</em>.</li>
+          <li>Once payment is complete, Paystack verifies it automatically.</li>
+          <li>You’ll see a confirmation message on screen — and your payment is done!</li>
+        </ol>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-2 accent">Supported Payment Options</h2>
+        <ul class="list-disc ml-6 space-y-2">
+          <li>💳 Debit/Credit Cards (Visa, Mastercard, Verve)</li>
+          <li>📱 Mobile Money (M-Pesa, Airtel Money, etc.)</li>
+          <li>🏦 Bank Transfers (where supported)</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-2 accent">Need Help?</h2>
+        <p>
+          If you run into any issues, contact <a href="mailto:lutancorpinfoteam@gmail.com" class="link">lutancorpinfoteam@gmail.com</a> 
+          or visit <a href="https://paystack.com/help" target="_blank" class="link">Paystack Help Center</a> for support.
+        </p>
+      </div>
+    </section>
+
+    <div class="mt-10 text-center">
+      <a href="/" class="link text-lg font-medium">← Back to Payment Page</a>
+    </div>
+  </div>
+
+  <footer class="text-faint text-sm mt-10 text-center">
+    © <span id="year"></span> Lutan Tech. All rights reserved.
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+</body>
+</html>
