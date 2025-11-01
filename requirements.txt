@@ -6,3 +6,5 @@ gunicorn
 pip
 flask_cors
 flask_migrate
+pymysql
+cryptography
