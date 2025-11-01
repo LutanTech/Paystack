@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lutan Tech Receipt</title>
+<link rel="icon" href="/assets/images/receipt.png" type="image/x-icon">
+<link rel="shortcut-icon" href="/assets/images/receipt.png" type="image/x-icon">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body {
+    background-color: #000;
+    color: #f3f4f6;
+    font-family: 'Inter', sans-serif;
+    background-image: url(/assets/images/circle.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .card {
+    background-color: #111827;
+    border: 1px solid #1f2937;
+  }
+  .accent { color: #34d399; }
+.loading {
+ --speed-of-animation: 0.9s;
+ --gap: 6px;
+ --first-color: #4c86f9;
+ --second-color: #49a84c;
+ --third-color: #f6bb02;
+ --fourth-color: #f6bb02;
+ --fifth-color: #2196f3;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ width: 100px;
+ gap: 6px;
+ height: 100px;
+ margin: auto;
+}
+
+.loading span {
+ width: 4px;
+ height: 50px;
+ background: var(--first-color);
+ animation: scale var(--speed-of-animation) ease-in-out infinite;
+}
+
+.loading span:nth-child(2) {
+ background: var(--second-color);
+ animation-delay: -0.8s;
+}
+
+.loading span:nth-child(3) {
+ background: var(--third-color);
+ animation-delay: -0.7s;
+}
+
+.loading span:nth-child(4) {
+ background: var(--fourth-color);
+ animation-delay: -0.6s;
+}
+
+.loading span:nth-child(5) {
+ background: var(--fifth-color);
+ animation-delay: -0.5s;
+}
+
+@keyframes scale {
+ 0%, 40%, 100% {
+  transform: scaleY(0.05);
+ }
+
+ 20% {
+  transform: scaleY(1);
+ }
+}
+.error{
+  color: red;
+}
+.success{
+  color: rgb(26, 171, 0);
+}
+.info{
+  color: rgb(3, 79, 200);
+}
+a{
+  color: #0f0 !important;
+  text-decoration: underline !important;
+}
+#receipt{
+  div >span:nth-of-type(2){
+    color: rgb(40, 221, 140) !important;
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+}
+@media print {
+  @page {
+    margin: 0; 
+  }
+  body {
+    margin: 0;
+  }
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+</style>
+</head>
+<body class="flex flex-column items-center justify-center min-h-screen p-6" style="flex-direction: column;">
+<div class="content">
+
+<div class="loading">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+<b class="message" style="word-break: keep-all; ">Getting Receipt...</b>
+
+
+</div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', ()=>{
+  const params = new URLSearchParams(window.location.search)
+  var id = params.get('id') || localStorage.getItem('latestId')
+  const baseUrl = 'http://127.0.0.1:5000'
+  // const baseUrl = 'https://paystack-hppt.onrender.com'
+  const msgEl = document.querySelector('.message')
+
+  if(id){
+    fetch(`${baseUrl}/receipt/${id}`)
+    .then(res=>res.json())
+    .then(data=>{
+      if(data.error){
+        msgEl.classList.add('error')
+        msgEl.innerHTML = data.error
+      } else{
+        const div = document.querySelector('.content')
+        div.innerHTML = data.receipt.content
+      }
+      console.table(data)
+    })
+  } else{
+    alert('no id found')
+  }
+})
+</script>
+
+</body>
+</html>
