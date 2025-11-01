@@ -136,8 +136,8 @@ a{
   document.addEventListener('DOMContentLoaded', ()=>{
   const params = new URLSearchParams(window.location.search)
   var id = params.get('id') || localStorage.getItem('latestId')
-  // const baseUrl = 'http://127.0.0.1:5000'
-  const baseUrl = 'https://paystack-hppt.onrender.com'
+  const baseUrl = 'http://127.0.0.1:5000'
+  // const baseUrl = 'https://paystack-hppt.onrender.com'
   const msgEl = document.querySelector('.message')
 
   if(id){
