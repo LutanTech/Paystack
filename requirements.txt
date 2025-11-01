@@ -3,3 +3,6 @@ requests
 python-dotenv
 Flask-SQLAlchemy
 gunicorn
+pip
+flask_cors
+flask_migrate
