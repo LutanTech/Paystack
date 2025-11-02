@@ -3,6 +3,7 @@ import hmac
 import hashlib
 import json
 from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template, request, jsonify, abort, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -10,6 +11,8 @@ from dotenv import load_dotenv
 import requests
 from flask_cors import CORS
 from flask_migrate import Migrate
+import secrets, string
+import json
 import secrets, string
 import json
 # load .env
@@ -55,6 +58,12 @@ def generate_random_id(length=10):
     return ''.join(secrets.choice(chars) for _ in range(length))
 
 
+
+def generate_random_id(length=10):
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
+
+
 # --- Models ---
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,6 +75,8 @@ class Transaction(db.Model):
     status = db.Column(db.String(40), default="pending") 
     channel = db.Column(db.String(80), nullable=True)
     raw_response = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda:datetime.utcnow() + timedelta(hours=3))
+    updated_at = db.Column(db.DateTime, default=lambda:datetime.utcnow() + timedelta(hours=3), onupdate=lambda:datetime.utcnow() + timedelta(hours=3))
     created_at = db.Column(db.DateTime, default=lambda:datetime.utcnow() + timedelta(hours=3))
     updated_at = db.Column(db.DateTime, default=lambda:datetime.utcnow() + timedelta(hours=3), onupdate=lambda:datetime.utcnow() + timedelta(hours=3))
 
@@ -94,9 +105,31 @@ class Receipt(db.Model):
             'accessed':self.accessed
         }
 
+class Receipt(db.Model):
+    id = db.Column(db.String(10), primary_key=True)
+    content = db.Column(db.Text)
+    at = db.Column(db.DateTime, default=lambda:datetime.utcnow() + timedelta(hours=3), onupdate=lambda:datetime.utcnow() + timedelta(hours=3))
+    accessed = db.Column(db.Boolean,default=False)
+    
+    def to_dict(self):
+        return{
+            'id': self.id,
+            "content":self.content,
+            "at": self.at,
+            'accessed':self.accessed
+        }
+
 
 with app.app_context():
     db.create_all()
+
+
+@app.route('/delete_db')
+def del_db():
+    with app.app_context():
+         db.drop_all()
+         return 'Deleted'
+
 
 
 @app.route('/delete_db')
@@ -255,6 +288,78 @@ def gen_receipt(data):
         return new_r.id
     except Exception as e:
         return f'Database error: {str(e)}'
+            id = gen_receipt(result)    
+            return jsonify({'result':result, 'id':id}), resp.status_code
+
+def gen_receipt(data):
+    d = data.get("data", {})
+
+    ref = d.get("reference", "N/A")
+    ce = d.get("customer", {}).get("email", "N/A")
+    amt = d.get("amount", 0) / 100
+    crn = d.get("currency", "")
+    channel = d.get("channel", "").replace("_", " ")
+    auth = d.get("authorization") or {}
+    bank = auth.get("bank") or "—"
+    mobile = auth.get("mobile_money_number") or "—"
+    status = d.get("status", "")
+    date_str = d.get("paid_at", "") or d.get("paidAt", "")
+    try:
+        if date_str:
+            utc_time = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            date_local = utc_time + timedelta(hours=3)
+            date = date_local.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            date = "N/A"
+    except Exception:
+        date = date_str or "N/A"
+    rno = d.get("receipt_number") or generate_random_id(10)
+
+    content = f"""
+    <div id="receipt" class="card w-full max-w-lg p-8 rounded-2xl shadow-2xl">
+  <div class="flex flex-col items-center mb-6">
+    <img src="https://i.ibb.co/KpHnKVW0/LUTAN-LOGO.png" class="h-12 mb-2" alt="Lutan Tech Logo" style="background-color: white;">
+    <h2 class="text-2xl font-bold">Payment Receipt</h2>
+    <p class="text-gray-400 text-sm">Transaction Reference: <span class="accent">{ref}</span></p>
+  </div>
+
+  <div class="border-t border-gray-700 my-4"></div>
+
+  <div class="space-y-3 text-xs">
+    <div class="flex justify-between"><span>Customer Email:</span><span style="font-size: xx-small !important;">{ce}</span></div>
+    <div class="flex justify-between"><span>Amount:</span><span class="font-semibold">{amt:.2f}</span></div>
+    <div class="flex justify-between"><span>Currency:</span><span>{crn}</span></div>
+    <div class="flex justify-between"><span>Payment Channel:</span><span>{channel}</span></div>
+    <div class="flex justify-between"><span>Bank / Method:</span><span>{bank}</span></div>
+    <div class="flex justify-between"><span>Mobile Number:</span><span>{mobile}</span></div>
+    <div class="flex justify-between"><span>Status:</span><span style="text-transform:uppercase;">{status}</span></div>
+    <div class="flex justify-between"><span>Date Paid:</span><span>{date}</span></div>
+    <div class="flex justify-between"><span>Receipt No:</span><span>{rno}</span></div>
+  </div>
+
+  <div class="border-t border-gray-700 my-6"></div>
+
+  <p class="text-center text-gray-400 text-sm">
+    Thank you for trusting <span class="accent font-medium">Lutan Tech</span> <br>
+    This serves as your official payment confirmation.
+  </p>
+
+  <div class="text-center mt-6">
+    <button id="print"  onclick="window.print()" 
+            class="bg-emerald-500 no-print hover:bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-semibold transition">
+      Print / Download Receipt
+    </button>
+  </div>
+</div>
+    """
+
+    try:
+        new_r = Receipt(id=generate_random_id(10), content=content)
+        db.session.add(new_r)
+        db.session.commit()
+        return new_r.id
+    except Exception as e:
+        return f'Database error: {str(e)}'
 
 @app.route("/pay/webhook", methods=["POST"])
 def paystack_webhook():
@@ -317,6 +422,16 @@ def admin_clear_pending():
         return jsonify({"status": True, "deleted": num})
     except Exception as e:
         return jsonify({"status": False, "error": str(e)}), 500
+    
+    
+@app.route('/receipt/<string:id>')
+def get_receipt(id):
+    if id:
+        receipt = Receipt.query.filter_by(id=id).first()
+        if receipt:
+            return jsonify({'receipt':receipt.to_dict()}), 200
+        return jsonify({'error':'Failed to get receipt. \n  Please contact <a href="/support"> support </a> and provide the email message send to you'}), 404
+    return jsonify({'error':'Missing data in request. Please use the link send to your email '}), 400
     
     
 @app.route('/receipt/<string:id>')

@@ -154,8 +154,8 @@ input[type=number]::-webkit-outer-spin-button {
       const statuselem = document.getElementById("status");
       const payButton = document.getElementById("payButton"); 
       const loader = document.querySelector('.loader');
-      const baseUrl = 'http://127.0.0.1:5000'
-      // const baseUrl = 'https://paystack-hppt.onrender.com'
+      // const baseUrl = 'http://127.0.0.1:5000'
+      const baseUrl = 'https://paystack-hppt.onrender.com'
 
     function fetchpublicKey(){
       loader.style.display = 'flex';
@@ -251,6 +251,37 @@ input[type=number]::-webkit-outer-spin-button {
             statusEl("Payment complete! Verifying reference...", 'info');
             payButton.disabled = true;
             fetchWithRetry(`${baseUrl}/pay/verify/${response.reference}`)
+            .then(r => r.json())
+            .then(data => {
+              console.log(data);
+
+              const j = data.result;
+              const receiptHTML = data.html; 
+
+              if (j.status && j.data && j.data.status === "success") {
+                statusEl("Payment confirmed ✅ Reference: " + response.reference, 'success');
+                const id = data.id
+                console.log('rec_id: ', data.id)
+                localStorage.setItem('latestId', id)
+                if(id){
+                  setTimeout(() => {
+                    window.location.href = `/receipt/?id=${id}`
+                  }, 2000);
+                }
+
+                payButton.disabled = false;
+              } else {
+                statusEl("Payment verification failed: " + (j.message || "Details unavailable."), 'error');
+                payButton.disabled = false;
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              statusEl("Error verifying payment 😬", 'error');
+              payButton.disabled = false;
+            })
+
+
             .then(r => r.json())
             .then(data => {
               console.log(data);
