@@ -98,7 +98,9 @@ input[type=number]::-webkit-outer-spin-button {
     }
     *:disabled {
       opacity: 0.5;
-      cursor: not-allowed;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+      user-select: none;
       background: grey !important;
     }
   </style>
@@ -152,10 +154,11 @@ input[type=number]::-webkit-outer-spin-button {
       const statuselem = document.getElementById("status");
       const payButton = document.getElementById("payButton"); 
       const loader = document.querySelector('.loader');
-      // const baseUrl = 'http://127.0.0.1:5000'
-      const baseUrl = 'https://paystack-hppt.onrender.com'
+      const baseUrl = 'http://127.0.0.1:5000'
+      // const baseUrl = 'https://paystack-hppt.onrender.com'
 
     function fetchpublicKey(){
+      loader.style.display = 'flex';
       statusEl("Fetching Paystack Public Key...", 'info');
       payButton.disabled = true;
       fetch(`${baseUrl}`)
@@ -164,17 +167,13 @@ input[type=number]::-webkit-outer-spin-button {
         publicKey = data.public_key
         if(publicKey){
           statusEl("Paystack Public Key has been configured. Please proceed to make payment.", 'success');
+          payButton.disabled = false
         } else {
           statusEl("Error: Paystack Public Key has not been configured. Please wait for server response.", 'error');
         }
-        payButton.disabled = false;
       })
       .catch(err => {
         statusEl("Error: Network error. Please try again later.", 'error');
-        payButton.disabled = false;
-      })
-      .finally(() => {
-        payButton.disabled = false;
       })
 
 
@@ -182,19 +181,15 @@ input[type=number]::-webkit-outer-spin-button {
       fetchpublicKey()
 
     function statusEl(message, type){
-
       loader.style.display = 'none';
       statuselem.textContent = message;
       statuselem.classList.remove('theme-text-faint')
       statuselem.classList.add(type === 'error' ? 'text-red-500' : type === 'success' ? 'text-green-500' : 'text-blue-500');
-      loader.style.display = 'flex';
-      setTimeout(() => {
-        loader.style.display = 'none';
-      }, 3000);
     }
     async function fetchWithRetry(url, options = {}, retries = 3) {
       for (let i = 0; i < retries; i++) {
         try {
+           loader.style.display = 'flex';
           const response = await fetch(url, options);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -208,7 +203,7 @@ input[type=number]::-webkit-outer-spin-button {
       }
     }
     payButton.addEventListener("click", async (e) => {
-      console.log('clicked')
+      loader.style.display = 'flex';
       payButton.disabled = true;
       statusEl("Initializing payment...", 'info');
       const email = document.getElementById("email").value.trim();
@@ -251,6 +246,8 @@ input[type=number]::-webkit-outer-spin-button {
           currency: "KES",
           channels: ["mobile_money", "card"], 
           callback: function(response){
+           loader.style.display = 'flex';
+
             statusEl("Payment complete! Verifying reference...", 'info');
             payButton.disabled = true;
             fetchWithRetry(`${baseUrl}/pay/verify/${response.reference}`)

@@ -34,10 +34,15 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     }
 }
 
+ALLOWED_FRONTEND_ORIGINS = [
+     "https://pay.66ghz.com"
+]
+
+CORS(app, origins=ALLOWED_FRONTEND_ORIGINS, supports_credentials=True)
+
 db = SQLAlchemy(app)
 
 Migrate(app,db)
-CORS(app)
 
 HEADERS = {
     "Authorization": f"Bearer {PAYSTACK_SECRET}",
